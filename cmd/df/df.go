@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"text/tabwriter"
 )
 
 const (
@@ -133,6 +134,18 @@ func calcUsedPercent(total int64, used int64) int {
 	return int((float64(used) * 100) / float64(total))
 }
 
+func printResultCommand(filesystems []*filesystem) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.TabIndent)
+	fmt.Fprintln(w, "Filesystem\tSize\tUsed\tAvail\tUse%\tMounted on\t")
+	for _, p := range filesystems {
+		fmt.Fprintln(w, fmt.Sprintf(
+			"%v\t%v\t%v\t%v\t%v\t%v\t",
+			p.Name, p.Total, p.Used, p.Available, p.UsedPercent, p.MountedOn,
+		))
+	}
+	w.Flush()
+}
+
 func main() {
 	fstab, err := load(pathfstab)
 	if err != nil {
@@ -150,7 +163,5 @@ func main() {
 		errors.New(fmt.Sprintf("error calculating paths usage: %v", err.Error()))
 	}
 
-	for _, p := range filesystems {
-		fmt.Println("Filesystem", p)
-	}
+	printResultCommand(filesystems)
 }
